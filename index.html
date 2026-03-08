@@ -3,227 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shaipup ROI Calculator - Advanced Ecosystem Model</title>
+    <title>Shaipup ROI Dashboard | Institutional Strategy Tool</title>
+    <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        .gradient-bg { background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }
-        .card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; backdrop-filter: blur(10px); }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
-            border-radius: 50%;
-            background: #10b981;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-        }
-        .input-group label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: radial-gradient(circle at top left, #0f172a, #020617); }
+        .card { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.25rem; backdrop-filter: blur(12px); transition: all 0.3s ease; }
+        .card:hover { border-color: rgba(16, 185, 129, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        
+        /* Custom Range Slider Styling */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(51, 65, 85, 0.5); border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #10b981; cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+        
+        /* Modal Transitions */
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .hidden-modal .modal-content { transform: scale(0.9) translateY(20px); }
     </style>
 </head>
-<body class="gradient-bg text-slate-200 min-h-screen p-4 md:p-8 font-sans">
+<body class="gradient-bg text-slate-200 min-h-screen p-4 md:p-8">
 
     <div class="max-w-7xl mx-auto">
-        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Shaipup <span class="text-emerald-400 italic">Impact Dashboard</span></h1>
-                <p class="text-slate-400">Ecosystem-driven IP discovery based on institutional metadata.</p>
+        <!-- Header Section -->
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-500 p-2 rounded-lg"><svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                    <h1 class="text-3xl font-extrabold text-white tracking-tight">Shaipup <span class="text-emerald-400 font-medium italic">ROI Dashboard</span></h1>
+                </div>
+                <p class="text-slate-400 font-medium">Quantifying the "Discovery Gap" in Institutional Digital IP.</p>
             </div>
-            <div class="text-right">
-                <span id="metabolismBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full text-xs font-mono">Institutional Metabolism: CALCULATING</span>
+            <div id="status-badge" class="px-5 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-xs font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                Status: Calculating Metabolism...
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <!-- INPUT SIDEBAR -->
-            <div class="card p-6 space-y-6 lg:col-span-1">
-                <h2 class="text-lg font-bold text-white border-b border-white/10 pb-3">Institutional Metrics</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Controls Sidebar (4 cols) -->
+            <aside class="lg:col-span-4 space-y-6">
+                <section class="card p-6 space-y-8">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                        <h2 class="font-bold text-white text-lg">Institutional Profile</h2>
+                        <button onclick="resetInputs()" class="text-[10px] text-slate-500 hover:text-white uppercase tracking-widest font-bold">Reset</button>
+                    </div>
+
+                    <!-- Input: Research Spend -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <div class="flex items-center gap-1">
+                                <label>Annual Research Portfolio</label>
+                                <button onclick="openModal('modal-spend')" class="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                            </div>
+                            <span class="text-emerald-400 font-mono" id="val-spend">$500M</span>
+                        </div>
+                        <input type="range" id="input-spend" min="50" max="2000" value="500" step="50" class="w-full">
+                    </div>
+
+                    <!-- Input: PhDs -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <div class="flex items-center gap-1">
+                                <label>Ph.D. Headcount</label>
+                                <button onclick="openModal('modal-phds')" class="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                            </div>
+                            <span class="text-emerald-400 font-mono" id="val-phds">1,200</span>
+                        </div>
+                        <input type="range" id="input-phds" min="100" max="5000" value="1200" step="100" class="w-full">
+                    </div>
+
+                    <!-- Input: Publications -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <div class="flex items-center gap-1">
+                                <label>Annual Publications</label>
+                                <button onclick="openModal('modal-pubs')" class="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                            </div>
+                            <span class="text-emerald-400 font-mono" id="val-pubs">3,500</span>
+                        </div>
+                        <input type="range" id="input-pubs" min="500" max="15000" value="3500" step="500" class="w-full">
+                    </div>
+
+                    <!-- Number Inputs with Modal Information -->
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-1">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold">TTO Officers</label>
+                                <button onclick="openModal('modal-staff')" class="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                            </div>
+                            <input type="number" id="input-staff" value="8" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-emerald-500 outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-1">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold">Disclosures</label>
+                                <button onclick="openModal('modal-disclosures')" class="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                            </div>
+                            <input type="number" id="input-disclosures" value="45" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </section>
+
+                <div class="p-4 bg-white/5 border border-dashed border-white/10 rounded-xl text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Institutional Metabolism Tool</p>
+                </div>
+            </aside>
+
+            <!-- Main Display (8 cols) -->
+            <main class="lg:col-span-8 space-y-8">
                 
-                <div class="input-group space-y-2">
-                    <label>Annual Research Spend</label>
-                    <input type="range" id="spend" min="50" max="2000" value="500" step="50" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
-                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">$50M</span> <span id="spendVal">$500M</span> <span class="text-xs text-slate-500">$2B</span></div>
-                </div>
-
-                <div class="input-group space-y-2">
-                    <label>PhD Student Headcount</label>
-                    <input type="range" id="phds" min="100" max="5000" value="1200" step="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
-                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">100</span> <span id="phdVal">1200</span> <span class="text-xs text-slate-500">5k</span></div>
-                </div>
-
-                <div class="input-group space-y-2">
-                    <label>Annual Publications</label>
-                    <input type="range" id="pubs" min="500" max="15000" value="3500" step="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
-                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">500</span> <span id="pubVal">3500</span> <span class="text-xs text-slate-500">15k</span></div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="input-group space-y-1">
-                        <label>TTO Staff</label>
-                        <input type="number" id="staff" value="8" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
+                <!-- Hero Metrics Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 border-l-4 border-l-blue-500 group relative">
+                        <p class="text-slate-500 text-[10px] uppercase font-black tracking-widest">Efficiency Savings</p>
+                        <h3 id="res-savings" class="text-3xl font-bold text-white mt-1">$0</h3>
+                        <p class="text-[10px] text-blue-400 font-bold mt-1 uppercase">Admin hours recovered</p>
                     </div>
-                    <div class="input-group space-y-1">
-                        <label>Disclosures</label>
-                        <input type="number" id="disclosures" value="45" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
+
+                    <div class="card p-6 border-l-4 border-l-emerald-500 group relative">
+                        <p class="text-slate-500 text-[10px] uppercase font-black tracking-widest">Shadow Revenue</p>
+                        <h3 id="res-revenue" class="text-3xl font-bold text-white mt-1">$0</h3>
+                        <p class="text-[10px] text-emerald-400 font-bold mt-1 uppercase">Found IP Recovery (Year 1)</p>
+                    </div>
+
+                    <div class="card p-6 border-l-4 border-l-purple-500 group relative">
+                        <p class="text-slate-500 text-[10px] uppercase font-black tracking-widest">Capacity Gap</p>
+                        <h3 id="res-gap" class="text-3xl font-bold text-white mt-1">0</h3>
+                        <p class="text-[10px] text-purple-400 font-bold mt-1 uppercase">Potential Assets per Staff</p>
                     </div>
                 </div>
 
-                <div class="input-group space-y-1">
-                    <label>Officer Hourly Rate ($)</label>
-                    <input type="number" id="rate" value="165" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
-                </div>
-            </div>
-
-            <!-- VISUALIZATION AREA -->
-            <div class="lg:col-span-3 space-y-6">
-                <!-- TOP CHART -->
-                <div class="card p-6 flex flex-col h-[400px]">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-white">The Discovery Gap</h2>
-                        <span class="text-xs text-slate-400 bg-white/5 px-2 py-1 rounded">Potential vs. Captured IP</span>
+                <!-- Main Discovery Chart -->
+                <div class="card p-8 flex flex-col h-[480px]">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Ecosystem Discovery Potential</h2>
+                            <p class="text-sm text-slate-400">Total institutional IP capture: Current vs. Shaipup Discovery.</p>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-blue-500/20 border border-blue-500"></span><span class="text-[10px] font-bold text-slate-400 uppercase">Manual</span></div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span><span class="text-[10px] font-bold text-slate-400 uppercase">Shaipup</span></div>
+                        </div>
                     </div>
-                    <div class="flex-grow">
+                    <div class="flex-grow relative">
                         <canvas id="discoveryChart"></canvas>
                     </div>
                 </div>
-
-                <!-- KEY METRICS ROW -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="card p-6 border-t-2 border-blue-500">
-                        <div class="flex justify-between items-start">
-                            <p class="text-slate-400 text-xs font-bold uppercase">Efficiency Gain</p>
-                            <span class="text-blue-500 bg-blue-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></span>
-                        </div>
-                        <h3 id="savings" class="text-3xl font-bold text-white mt-2">$0</h3>
-                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Admin hours recovered from manual vetting</p>
-                    </div>
-                    <div class="card p-6 border-t-2 border-emerald-500">
-                        <div class="flex justify-between items-start">
-                            <p class="text-slate-400 text-xs font-bold uppercase">Shadow Revenue</p>
-                            <span class="text-emerald-500 bg-emerald-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span>
-                        </div>
-                        <h3 id="revenue" class="text-3xl font-bold text-white mt-2">$0</h3>
-                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Projected Year 1 recovery of hidden IP</p>
-                    </div>
-                    <div class="card p-6 border-t-2 border-purple-500">
-                        <div class="flex justify-between items-start">
-                            <p class="text-slate-400 text-xs font-bold uppercase">Capacity Burden</p>
-                            <span class="text-purple-500 bg-purple-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></span>
-                        </div>
-                        <h3 id="burden" class="text-3xl font-bold text-white mt-2">0</h3>
-                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Potential assets per TTO staff member</p>
-                    </div>
-                </div>
-            </div>
+            </main>
         </div>
+    </div>
 
-        <footer class="text-center text-slate-500 text-xs p-6 border-t border-white/5">
-            <p>Opportunity model: Discoverable IP = (Spend * 0.4) + (PhDs * 0.15) + (Pubs * 0.08). Shaipup acts as a force multiplier for overwhelmed TTO staff.</p>
-        </footer>
+    <!-- MODAL: RESEARCH SPEND -->
+    <div id="modal-spend" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-modal modal-overlay">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="closeModal('modal-spend')" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="bg-emerald-500/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-4">Research Portfolio Impact</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Every $1M in modern research produces a measurable amount of software "biomass." 
+                <br><br>
+                We utilize a <strong>0.45 discovery coefficient</strong> to estimate commercial-ready code discovery. As portfolios shift toward AI and data-driven sciences, this metric represents the foundational "nutrients" for digital IP creation.
+            </p>
+            <button onclick="closeModal('modal-spend')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all">Understood</button>
+        </div>
+    </div>
+
+    <!-- MODAL: PHDS -->
+    <div id="modal-phds" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-modal modal-overlay">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="closeModal('modal-phds')" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="bg-purple-500/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-4">Talent Discovery Pipeline</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Ph.D. candidates are the high-velocity producers of institutional code. Much of this work currently remains uncaptured as it sits in decentralized lab repositories.
+                <br><br>
+                Shaipup automates <strong>attribution mapping</strong>, ensuring institutional ownership and commercial continuity before talented researchers graduate and move on to industry.
+            </p>
+            <button onclick="closeModal('modal-phds')" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all">Got it</button>
+        </div>
+    </div>
+
+    <!-- MODAL: PUBS -->
+    <div id="modal-pubs" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-modal modal-overlay">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="closeModal('modal-pubs')" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="bg-blue-500/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-4">Shadow IP Proxy Metrics</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Publication density is a direct proxy for uncaptured companion software. We estimate one commercially viable IP asset for every 12 publications.
+                <br><br>
+                Shaipup identifies the digital artifacts (scripts, models, libraries) that support these findings, closing the <strong>reproducibility gap</strong> and converting academic output into commercial assets.
+            </p>
+            <button onclick="closeModal('modal-pubs')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all">Understood</button>
+        </div>
+    </div>
+
+    <!-- MODAL: TTO STAFF -->
+    <div id="modal-staff" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-modal modal-overlay">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="closeModal('modal-staff')" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="bg-blue-500/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-4">Capacity Leverage Metrics</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Institutional TTO staff are the primary foragers of your intellectual ecosystem. However, manual vetting of code limits their metabolic reach. 
+                <br><br>
+                Shaipup acts as a <strong>force multiplier</strong>, allowing your current headcount to manage a discovery volume 10x larger than manual workflows, transitioning them from administrative drudgery to high-value strategic leadership.
+            </p>
+            <button onclick="closeModal('modal-staff')" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all">Got it</button>
+        </div>
+    </div>
+
+    <!-- MODAL: DISCLOSURES -->
+    <div id="modal-disclosures" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-modal modal-overlay">
+        <div class="modal-content w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 relative shadow-2xl">
+            <button onclick="closeModal('modal-disclosures')" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="bg-emerald-500/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-4">Capture Efficiency Model</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Manual disclosures represent the "Visible Biomass"—only what researchers proactively report. This is often less than 10% of total institutional output.
+                <br><br>
+                Shaipup reveals the <strong>Shadow IP</strong> hidden in departmental repositories. By identifying these assets automatically, we close the gap between your current capture rate and your true institutional potential.
+            </p>
+            <button onclick="closeModal('modal-disclosures')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all">Understood</button>
+        </div>
     </div>
 
     <script>
-        let chart;
-        
-        function calculate() {
-            // Inputs
-            const spend = parseInt(document.getElementById('spend').value);
-            const phds = parseInt(document.getElementById('phds').value);
-            const pubs = parseInt(document.getElementById('pubs').value);
-            const staff = parseInt(document.getElementById('staff').value);
-            const disclosures = parseInt(document.getElementById('disclosures').value);
-            const rate = parseInt(document.getElementById('rate').value);
+        let myChart = null;
 
-            // UI Updates
-            document.getElementById('spendVal').innerText = `$${spend}M`;
-            document.getElementById('phdVal').innerText = phds.toLocaleString();
-            document.getElementById('pubVal').innerText = pubs.toLocaleString();
+        const HANDLING_TIME_MANUAL = 40;
+        const HANDLING_TIME_SHAIPUP = 4;
+        const OFFICER_RATE = 165;
+        const CAPTURE_PROBABILITY = 0.05;
+        const MEDIAN_ROYALTY = 25000;
 
-            // ECOSYSTEM MODEL CALCULATION
-            // 1. Discoverable IP Volume (The "Shadow IP")
-            // Spend is a driver, but PhDs and Pubs are higher fidelity indicators for software.
-            const potentialIP = Math.round(
-                (spend * 0.4) +   // $1M spend usually signals core funding
-                (phds * 0.15) +   // PhDs are the primary code producers
-                (pubs * 0.08)     // Every 12 pubs roughly correlate to 1 companion software tool
-            );
+        function calculateDiscoveryPotential(spend, phds, pubs) {
+            const fromSpend = spend * 0.45;
+            const fromTalent = phds * 0.18;
+            const fromPubs = pubs * 0.09;
+            return Math.round(fromSpend + fromTalent + fromPubs);
+        }
 
-            // 2. Efficiency Savings
-            // Shaipup reduces per-asset vetting from 40 hours to 4 hours.
-            const savingsValue = disclosures * (40 - 4) * rate;
-            document.getElementById('savings').innerText = `$${savingsValue.toLocaleString()}`;
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden-modal');
+            document.body.style.overflow = 'hidden';
+        }
 
-            // 3. Shadow Revenue Recovery
-            // Assumes 5% conversion of shadow IP to $25k/yr average license
-            const shadowIPFound = potentialIP - disclosures;
-            const newRevenueValue = Math.round((shadowIPFound * 0.05) * 25000);
-            document.getElementById('revenue').innerText = `$${newRevenueValue.toLocaleString()}`;
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden-modal');
+            document.body.style.overflow = 'auto';
+        }
 
-            // 4. Capacity Burden (Assets per Officer)
-            const burdenValue = (potentialIP / staff).toFixed(1);
-            document.getElementById('burden').innerText = `${burdenValue} : 1`;
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                ['modal-staff', 'modal-disclosures', 'modal-spend', 'modal-phds', 'modal-pubs'].forEach(id => closeModal(id));
+            }
+        });
 
-            // Metabolism Badge
-            const badge = document.getElementById('metabolismBadge');
-            if (burdenValue > 50) {
-                badge.innerText = "Metabolism: OVERWHELMED";
-                badge.className = "bg-red-500/10 text-red-400 border border-red-500/20 px-4 py-2 rounded-full text-xs font-mono";
-            } else if (burdenValue > 25) {
-                badge.innerText = "Metabolism: STAGNANT";
-                badge.className = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-4 py-2 rounded-full text-xs font-mono";
+        function updateUI() {
+            const spend = parseFloat(document.getElementById('input-spend').value);
+            const phds = parseFloat(document.getElementById('input-phds').value);
+            const pubs = parseFloat(document.getElementById('input-pubs').value);
+            const staff = parseFloat(document.getElementById('input-staff').value) || 1;
+            const disclosures = parseFloat(document.getElementById('input-disclosures').value) || 0;
+
+            document.getElementById('val-spend').innerText = `$${spend}M`;
+            document.getElementById('val-phds').innerText = phds.toLocaleString();
+            document.getElementById('val-pubs').innerText = pubs.toLocaleString();
+
+            const potentialIP = calculateDiscoveryPotential(spend, phds, pubs);
+            const annualSavings = Math.round(disclosures * (HANDLING_TIME_MANUAL - HANDLING_TIME_SHAIPUP) * OFFICER_RATE);
+            const gap = Math.max(0, potentialIP - disclosures);
+            const recoveredRevenue = Math.round(gap * CAPTURE_PROBABILITY * MEDIAN_ROYALTY);
+            const burden = (potentialIP / staff).toFixed(1);
+
+            document.getElementById('res-savings').innerText = `$${annualSavings.toLocaleString()}`;
+            document.getElementById('res-revenue').innerText = `$${recoveredRevenue.toLocaleString()}`;
+            document.getElementById('res-gap').innerText = `${burden} : 1`;
+
+            const badge = document.getElementById('status-badge');
+            if (burden > 60) {
+                badge.innerText = "Status: Critical Resource Gap";
+                badge.className = "px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 font-mono text-xs font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(239,68,68,0.1)]";
+            } else if (burden > 30) {
+                badge.innerText = "Status: Capturing Undergrowth";
+                badge.className = "px-5 py-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 font-mono text-xs font-bold tracking-widest uppercase";
             } else {
-                badge.innerText = "Metabolism: EFFICIENT";
-                badge.className = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full text-xs font-mono";
+                badge.innerText = "Status: Healthy Ecosystem";
+                badge.className = "px-5 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-xs font-bold tracking-widest uppercase";
             }
 
-            updateChart(disclosures, potentialIP);
+            renderChart(disclosures, potentialIP);
         }
 
-        function updateChart(captured, potential) {
-            const ctx = document.getElementById('discoveryChart').getContext('2d');
-            
-            if (chart) chart.destroy();
+        function renderChart(current, potential) {
+            const canvas = document.getElementById('discoveryChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (typeof Chart === 'undefined') return;
 
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Manual Capture (Current)', 'Total Ecosystem Potential (Shaipup)'],
-                    datasets: [{
-                        label: 'IP Assets',
-                        data: [captured, potential],
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.4)', 
-                            'rgba(16, 185, 129, 0.7)'
-                        ],
-                        borderColor: ['#3b82f6', '#10b981'],
-                        borderWidth: 2,
-                        borderRadius: 12,
-                        barThickness: 100
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: '#0f172a', titleFont: { size: 14 } }
+            if (myChart) {
+                myChart.data.datasets[0].data = [current, potential];
+                myChart.update('none');
+            } else {
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Manual Disclosure Volume', 'Untapped Digital IP Portfolio'],
+                        datasets: [{
+                            data: [current, potential],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.2)', 
+                                'rgba(16, 185, 129, 0.8)'
+                            ],
+                            borderColor: [
+                                '#3b82f6', 
+                                '#10b981'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 12,
+                            barThickness: 100
+                        }]
                     },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#94a3b8' } 
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                padding: 12,
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                cornerRadius: 8
+                            }
                         },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: '#f8fafc', font: { weight: 'bold' } } 
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                                ticks: { color: '#64748b' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#f1f5f9', font: { weight: 'bold' } }
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
 
-        window.onload = calculate;
+        function resetInputs() {
+            document.getElementById('input-spend').value = 500;
+            document.getElementById('input-phds').value = 1200;
+            document.getElementById('input-pubs').value = 3500;
+            document.getElementById('input-staff').value = 8;
+            document.getElementById('input-disclosures').value = 45;
+            updateUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = ['input-spend', 'input-phds', 'input-pubs', 'input-staff', 'input-disclosures'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                el.addEventListener('input', updateUI);
+                el.addEventListener('change', updateUI);
+            });
+            setTimeout(updateUI, 100);
+        });
     </script>
 </body>
 </html>
