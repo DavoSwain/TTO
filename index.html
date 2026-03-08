@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaipup ROI Calculator - Advanced Ecosystem Model</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }
+        .card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; backdrop-filter: blur(10px); }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        .input-group label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; }
+    </style>
+</head>
+<body class="gradient-bg text-slate-200 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Shaipup <span class="text-emerald-400 italic">Impact Dashboard</span></h1>
+                <p class="text-slate-400">Ecosystem-driven IP discovery based on institutional metadata.</p>
+            </div>
+            <div class="text-right">
+                <span id="metabolismBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full text-xs font-mono">Institutional Metabolism: CALCULATING</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <!-- INPUT SIDEBAR -->
+            <div class="card p-6 space-y-6 lg:col-span-1">
+                <h2 class="text-lg font-bold text-white border-b border-white/10 pb-3">Institutional Metrics</h2>
+                
+                <div class="input-group space-y-2">
+                    <label>Annual Research Spend</label>
+                    <input type="range" id="spend" min="50" max="2000" value="500" step="50" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
+                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">$50M</span> <span id="spendVal">$500M</span> <span class="text-xs text-slate-500">$2B</span></div>
+                </div>
+
+                <div class="input-group space-y-2">
+                    <label>PhD Student Headcount</label>
+                    <input type="range" id="phds" min="100" max="5000" value="1200" step="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
+                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">100</span> <span id="phdVal">1200</span> <span class="text-xs text-slate-500">5k</span></div>
+                </div>
+
+                <div class="input-group space-y-2">
+                    <label>Annual Publications</label>
+                    <input type="range" id="pubs" min="500" max="15000" value="3500" step="100" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="calculate()">
+                    <div class="flex justify-between text-white font-bold"><span class="text-xs text-slate-500">500</span> <span id="pubVal">3500</span> <span class="text-xs text-slate-500">15k</span></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group space-y-1">
+                        <label>TTO Staff</label>
+                        <input type="number" id="staff" value="8" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
+                    </div>
+                    <div class="input-group space-y-1">
+                        <label>Disclosures</label>
+                        <input type="number" id="disclosures" value="45" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
+                    </div>
+                </div>
+
+                <div class="input-group space-y-1">
+                    <label>Officer Hourly Rate ($)</label>
+                    <input type="number" id="rate" value="165" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500" onchange="calculate()">
+                </div>
+            </div>
+
+            <!-- VISUALIZATION AREA -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- TOP CHART -->
+                <div class="card p-6 flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white">The Discovery Gap</h2>
+                        <span class="text-xs text-slate-400 bg-white/5 px-2 py-1 rounded">Potential vs. Captured IP</span>
+                    </div>
+                    <div class="flex-grow">
+                        <canvas id="discoveryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- KEY METRICS ROW -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 border-t-2 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <p class="text-slate-400 text-xs font-bold uppercase">Efficiency Gain</p>
+                            <span class="text-blue-500 bg-blue-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></span>
+                        </div>
+                        <h3 id="savings" class="text-3xl font-bold text-white mt-2">$0</h3>
+                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Admin hours recovered from manual vetting</p>
+                    </div>
+                    <div class="card p-6 border-t-2 border-emerald-500">
+                        <div class="flex justify-between items-start">
+                            <p class="text-slate-400 text-xs font-bold uppercase">Shadow Revenue</p>
+                            <span class="text-emerald-500 bg-emerald-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span>
+                        </div>
+                        <h3 id="revenue" class="text-3xl font-bold text-white mt-2">$0</h3>
+                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Projected Year 1 recovery of hidden IP</p>
+                    </div>
+                    <div class="card p-6 border-t-2 border-purple-500">
+                        <div class="flex justify-between items-start">
+                            <p class="text-slate-400 text-xs font-bold uppercase">Capacity Burden</p>
+                            <span class="text-purple-500 bg-purple-500/10 p-1 rounded"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></span>
+                        </div>
+                        <h3 id="burden" class="text-3xl font-bold text-white mt-2">0</h3>
+                        <p class="text-[10px] text-slate-500 mt-1 italic leading-tight">Potential assets per TTO staff member</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center text-slate-500 text-xs p-6 border-t border-white/5">
+            <p>Opportunity model: Discoverable IP = (Spend * 0.4) + (PhDs * 0.15) + (Pubs * 0.08). Shaipup acts as a force multiplier for overwhelmed TTO staff.</p>
+        </footer>
+    </div>
+
+    <script>
+        let chart;
+        
+        function calculate() {
+            // Inputs
+            const spend = parseInt(document.getElementById('spend').value);
+            const phds = parseInt(document.getElementById('phds').value);
+            const pubs = parseInt(document.getElementById('pubs').value);
+            const staff = parseInt(document.getElementById('staff').value);
+            const disclosures = parseInt(document.getElementById('disclosures').value);
+            const rate = parseInt(document.getElementById('rate').value);
+
+            // UI Updates
+            document.getElementById('spendVal').innerText = `$${spend}M`;
+            document.getElementById('phdVal').innerText = phds.toLocaleString();
+            document.getElementById('pubVal').innerText = pubs.toLocaleString();
+
+            // ECOSYSTEM MODEL CALCULATION
+            // 1. Discoverable IP Volume (The "Shadow IP")
+            // Spend is a driver, but PhDs and Pubs are higher fidelity indicators for software.
+            const potentialIP = Math.round(
+                (spend * 0.4) +   // $1M spend usually signals core funding
+                (phds * 0.15) +   // PhDs are the primary code producers
+                (pubs * 0.08)     // Every 12 pubs roughly correlate to 1 companion software tool
+            );
+
+            // 2. Efficiency Savings
+            // Shaipup reduces per-asset vetting from 40 hours to 4 hours.
+            const savingsValue = disclosures * (40 - 4) * rate;
+            document.getElementById('savings').innerText = `$${savingsValue.toLocaleString()}`;
+
+            // 3. Shadow Revenue Recovery
+            // Assumes 5% conversion of shadow IP to $25k/yr average license
+            const shadowIPFound = potentialIP - disclosures;
+            const newRevenueValue = Math.round((shadowIPFound * 0.05) * 25000);
+            document.getElementById('revenue').innerText = `$${newRevenueValue.toLocaleString()}`;
+
+            // 4. Capacity Burden (Assets per Officer)
+            const burdenValue = (potentialIP / staff).toFixed(1);
+            document.getElementById('burden').innerText = `${burdenValue} : 1`;
+
+            // Metabolism Badge
+            const badge = document.getElementById('metabolismBadge');
+            if (burdenValue > 50) {
+                badge.innerText = "Metabolism: OVERWHELMED";
+                badge.className = "bg-red-500/10 text-red-400 border border-red-500/20 px-4 py-2 rounded-full text-xs font-mono";
+            } else if (burdenValue > 25) {
+                badge.innerText = "Metabolism: STAGNANT";
+                badge.className = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-4 py-2 rounded-full text-xs font-mono";
+            } else {
+                badge.innerText = "Metabolism: EFFICIENT";
+                badge.className = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full text-xs font-mono";
+            }
+
+            updateChart(disclosures, potentialIP);
+        }
+
+        function updateChart(captured, potential) {
+            const ctx = document.getElementById('discoveryChart').getContext('2d');
+            
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Manual Capture (Current)', 'Total Ecosystem Potential (Shaipup)'],
+                    datasets: [{
+                        label: 'IP Assets',
+                        data: [captured, potential],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.4)', 
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderColor: ['#3b82f6', '#10b981'],
+                        borderWidth: 2,
+                        borderRadius: 12,
+                        barThickness: 100
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#0f172a', titleFont: { size: 14 } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#94a3b8' } 
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: '#f8fafc', font: { weight: 'bold' } } 
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+</html>
+
